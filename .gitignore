@@ -1,0 +1,17 @@
+# The game binary and everything extracted from it are never committed.
+original/
+out/
+build/
+*.exe
+*.zip
+*.bmp
+
+# Local only
+reference/
+_archivo/
+launch/
+BITACORA.md
+__pycache__/
+*.pyc
+.DS_Store
+*.log
