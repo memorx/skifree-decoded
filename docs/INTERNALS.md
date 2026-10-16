@@ -162,7 +162,11 @@ The course zones use their own tables (`pickTypeSlalomZone`, `pickTypeTreeSlalom
 
 ## Sound
 
-`initWindows` loads nine `WAVE` resources with `loadWave`, and `playSound` plays them with `sndPlaySound(SND_ASYNC | SND_MEMORY)`. But `ski32.exe` contains no `WAVE` resources at all, so every load fails and the game is silent. The `nosound` command-line option skips the loading. Where each slot would have played, from its call sites:
+`initWindows` loads nine `WAVE` resources with `loadWave`, and `playSound` plays them with `sndPlaySound(SND_ASYNC | SND_MEMORY)`. But `ski32.exe` contains no `WAVE` resources at all, so every load fails and the game is silent. The `nosound` command-line option skips the loading.
+
+The original 16-bit `SKI.EXE` of 1991 has no sound code: it does not even reference `MMSYSTEM`, the Windows 3.x sound library. The author writes on his site that his Version 2, begun in 1993 and never released, had sound. The code in 1.04 looks like a leftover of that work, but that is our inference, not something he states.
+
+Where each slot would have played, from its call sites:
 
 | Slot | Event |
 | --- | --- |

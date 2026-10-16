@@ -20,6 +20,14 @@ Cada paso tiene tres partes: qué hicimos, por qué funciona y algo para que lo 
 
 El análisis se hizo con Claude Code, un agente de programación con IA, dirigido por el autor. Cada afirmación sobre el juego se volvió a comprobar contra el código decompilado antes de entrar a esta guía, y los errores que cometimos en el camino están en el Paso 4.
 
+## ¿Qué es SkiFree?
+
+![SkiFree a los 75 m](img/screen-gameplay.png)
+
+SkiFree es un juego de esquí diminuto para Windows, escrito en 1991 por Chris Pirih, programador de Microsoft, en la computadora de su casa. Microsoft lo licenció y lo incluyó en el Microsoft Entertainment Pack 3 para Windows 3.0, en octubre de 1991. Bajas por una pendiente sin fin esquivando árboles, rocas, perros y otros esquiadores, en tres pistas: slalom, slalom entre árboles y freestyle. Si sigues bajando lo suficiente, el Abominable Monstruo de las Nieves te come.
+
+El autor perdió el código fuente como en 1993 y en 2005 encontró el de la versión 1.03. Con él compiló una versión real de 32 bits y en octubre de 2005 publicó la 1.04. Esa es la que desarmamos en esta guía, y la sigue regalando en [ski.ihoc.net](https://ski.ihoc.net/).
+
 ## El panorama general
 
 Hacer reverse engineering es recuperar cómo funciona un programa a partir del programa compilado, sin el código fuente. Al compilar se pierden los nombres, los comentarios y los tipos, pero se quedan la lógica, las constantes, los textos y cada llamada que el programa le hace al sistema operativo. Tu trabajo es devolverle el significado.
@@ -59,7 +67,7 @@ El autor de SkiFree, Chris Pirih, regala el juego en su propio sitio, [ski.ihoc.
 Dos reglas que mantienen limpio un proyecto así:
 
 - **Nunca subas el binario a tu repositorio.** Pon la liga de donde se baja legalmente y verifica el hash. Nuestro `run.py` lo baja del sitio del autor y se niega a seguir si el hash no coincide.
-- **Tampoco subas lo que extraes de él**, como los sprites. El repo publica el método y los nombres; lo demás lo regeneras en tu máquina.
+- **Tampoco subas lo que extraes de él.** El repo publica el método y los nombres, y los sprites y el C decompilado los regeneras en tu máquina. La única excepción son unas cuantas capturas y sprites en la documentación, con crédito al autor, para que se vea el juego.
 
 **Inténtalo.** En Windows, `certutil -hashfile ski32.exe SHA256`. En Linux o macOS, `sha256sum ski32.exe`.
 
@@ -277,7 +285,7 @@ Los datos famosos se sostienen: el yeti te persigue después de 2,000 metros y l
 
 | Qué | Lo que de verdad hace el código | Función |
 | --- | --- | --- |
-| El juego es mudo, a propósito o por accidente | Hay un sistema de sonido completo con 9 sonidos y una opción `nosound`, pero el cargador busca recursos `WAVE` y el archivo no tiene ninguno. Nunca ha sonado nada. | `initWindows`, `loadWave` |
+| Ninguna versión publicada ha sonado nunca | La versión 1.04 tiene un sistema de sonido completo con 9 sonidos y una opción `nosound`, pero el cargador busca recursos `WAVE` y el archivo no tiene ninguno. El original de 1991 ni siquiera usa la librería de sonido de Windows. El autor cuenta que su Versión 2, que nunca salió, sí tenía sonido. | `initWindows`, `loadWave` |
 | Hay cuatro yetis, no uno | Uno espera en cada orilla del mundo. Baja 2,000 m, sube 125 m sobre la salida o aléjate 1,000 m a cualquier lado, y el yeti de esa orilla te persigue. | `buildCourses`, `updateYeti` |
 | Los saltos con mouse llegan tres veces más alto | Un clic despega con velocidad hacia arriba de 4. La tecla Insert despega con 2 y además te quita 4 de velocidad hacia adelante. Con gravedad de 1 por tick, el clic llega a altura 10 en vez de 3 y dura en el aire como el doble. | `onLeftClick`, `onKeyDown` |
 | La F duplica tu velocidad | La tecla F prende una bandera que aplica la velocidad dos veces por tick al esquiador y a todo objeto que se mueve libre. Los yetis y el telesilla corren en otro código y conservan su velocidad normal. | `onCharKey`, `applyVelocity` |
@@ -291,6 +299,12 @@ Los datos famosos se sostienen: el yeti te persigue después de 2,000 metros y l
 | Récords | Los 10 mejores por pista, en `entpack.ini` bajo `[Ski]` con las llaves `SS`, `FS` y `GS`. | `showHighScores` |
 | Teclas de depuración que se quedaron | `t` corre un tick a mano, `r` redibuja, y `x`, `X`, `y`, `Y` mueven al esquiador 2 píxeles. | `onCharKey` |
 | El código fuente original | Todos los asserts nombran el mismo archivo, `V:\hack\ski32\ski2.c`, con números de línea hasta el 4,387. El juego se escribió casi todo, quizá todo, en ese archivo. | quienes llaman a `assertFailed` |
+
+![El elenco y los secretos](img/cast.png)
+
+![El yeti a los 2,000 m, capturas reales](img/screen-yeti.png)
+
+Las capturas del yeti son del juego real. [`scripts/capture_gameplay.py`](../scripts/capture_gameplay.py) lo corre fuera de la pantalla, arranca su timer con un `WM_ACTIVATE` falso, aprieta teclas con `PostMessage` y lee la posición del esquiador en memoria, en la dirección de `g_player`, una de las globales que nombramos. Conocer las tripas del programa es lo que permite manejarlo con un script.
 
 Dos detalles de ingeniería que vale la pena copiar. El juego corre a 25 cuadros por segundo con un timer de Windows de 40 ms. Y nunca redibuja la pantalla completa: cuando algo se mueve, deja una copia "fantasma" en la posición vieja que se borra, y solo se pintan los rectángulos que cambiaron. Por eso corría fluido en una 386.
 
